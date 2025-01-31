@@ -1,0 +1,66 @@
+@page
+@model BlogApp.Areas.Identity.Pages.Account.Admin
+
+@{
+    
+}
+
+<h1 class="text-center m-4">Admin Page</h1>
+
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th scope="col">User</th>
+        <th scope="col">Roles</th>
+        <th scope="col" colspan="2">Set Admin Role</th>
+        <th scope="col" colspan="2">Set Contributor Role</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var account in Model.Users)
+    {
+        <tr>
+            <th scope="row">@account.User.Email</th>
+            <td>
+                @if (account.Roles.Any())
+                {
+                    <ul>
+                        @foreach (var role in account.Roles)
+                        {
+                            <li>@role</li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p>No Roles Assigned.</p>
+                }
+            </td>
+            <td colspan="2">
+                <div class="d-inline-flex gap-4">
+                    <form asp-page-handler="AddAdmin" method="post">
+                        <input type="hidden" asp-for="SelectedUserId" value="@account.User.Id"/>
+                        <button type="submit" class="btn btn-danger">Admin</button>
+                    </form>
+                    <form asp-page-handler="RemoveAdmin" method="post">
+                        <input type="hidden" asp-for="SelectedUserId" value="@account.User.Id"/>
+                        <button type="submit" class="btn btn-warning">None</button>
+                    </form>
+                </div>
+            </td>
+            <td colspan="2">
+                <div class="d-inline-flex gap-4">
+                    <form asp-page-handler="AddContributor" method="post">
+                        <input type="hidden" asp-for="SelectedUserId" value="@account.User.Id"/>
+                        <button type="submit" class="btn btn-success">Contributor</button>
+                    </form>
+                    <form asp-page-handler="RemoveContributor" method="post">
+                        <input type="hidden" asp-for="SelectedUserId" value="@account.User.Id"/>
+                        <button type="submit" class="btn btn-warning">None</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

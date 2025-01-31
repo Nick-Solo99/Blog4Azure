@@ -1,0 +1,48 @@
+﻿@model List<BlogApp.Models.Article>
+@using System.Security.Claims
+@using Humanizer
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4 m-4">Articles</h1>
+    
+    @if (Model.Any())
+    {
+        <ul>
+            @foreach (var article in Model)
+            {
+                <a asp-controller="Article" asp-action="Details" asp-route-id="@article.ArticleId" style="text-decoration: none">
+                    <div class="card mb-3">
+                        <h3 class="card-header">@article.Title</h3>
+                        <div class="card-body">
+                            <h5 class="card-title">@article.Contributor!.FirstName</h5>
+                            <h6 class="card-subtitle text-muted">@article.StartDate.ToString("MMMM dd, yyyy")</h6>
+                        </div>
+                        <div class="card-body">
+                            @{
+                                var bodyPreview = article.Body!.Length > 100 ? article.Body.Substring(0, 100) + "..." : article.Body;
+                            }
+                            <p class="card-text">@bodyPreview</p>
+                            @if (article.Body.Length > 100)
+                            {
+                                <span class="text-primary text-decoration-underline">more...</span>
+                            }
+                        </div>
+                        @if (User.FindFirstValue(ClaimTypes.NameIdentifier) == article.Contributor.Id)
+                        {
+                            <div class="card-body">
+                                <a asp-controller="Article" asp-action="Edit" asp-route-id="@article.ArticleId" class="card-link">Edit</a>
+                                <a asp-controller="Article" asp-action="Delete" asp-route-id="@article.ArticleId" class="card-link">Delete</a>
+                            </div>
+                        }
+                        <div class="card-footer text-muted" data-utc="@article.CreateDate.ToString("o")">
+                            @article.CreateDate.Humanize()
+                        </div>
+                    </div>
+                </a>
+            }
+        </ul>
+    }
+</div>
