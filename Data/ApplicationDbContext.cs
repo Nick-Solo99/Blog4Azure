@@ -1,6 +1,7 @@
 ﻿using BlogApp.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace BlogApp.Data;
 
@@ -27,5 +28,10 @@ public class ApplicationDbContext : IdentityDbContext<BlogUser>
             .HasForeignKey(a => a.ContributorEmail)
             .HasPrincipalKey(u => u.Email)
             .OnDelete(DeleteBehavior.Restrict);
+    }
+    
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
     }
 }

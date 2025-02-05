@@ -48,7 +48,19 @@
         </dd>
     </dl>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.ArticleId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+@if (User.Identity!.Name == Model.ContributorEmail)
+{
+    <div>
+        <a asp-action="Edit" asp-route-id="@Model?.ArticleId">Edit</a> |
+        <a asp-action="Index">Back to List</a>
+    </div>
+    
+}
+else
+{
+    <div>
+   
+        <a asp-action="Index">Back to List</a>
+    </div>
+}
+

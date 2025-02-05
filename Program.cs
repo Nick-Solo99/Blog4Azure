@@ -7,101 +7,24 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<BlogUser>(options => options.SignIn.RequireConfirmedAccount = false)
+builder.Services.AddIdentity<BlogUser, IdentityRole>(
+        options => {
+            options.Stores.MaxLengthForKeys = 128;
+        })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddDefaultUI()
+    .AddDefaultTokenProviders();
 
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
-
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await dbContext.Database.MigrateAsync();
-}
-
-await using (var scope = app.Services.CreateAsyncScope())
-{
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var roles = new[] { "Admin", "Contributor" };
-
-    foreach (var role in roles)
-    {
-        if (!await roleManager.RoleExistsAsync(role))
-        {
-            await roleManager.CreateAsync(new IdentityRole(role));
-        }
-    }
-}
-
-using (var scope = app.Services.CreateScope())
-{
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<BlogUser>>();
-    string adminEmail = "a@a.a";
-    string contributorEmail = "c@c.c";
-    string password = "P@$$w0rd";
-
-    if (await userManager.FindByEmailAsync(adminEmail) == null)
-    {
-        var adminUser = new BlogUser
-        {
-            UserName = adminEmail, 
-            Email = adminEmail,
-            FirstName = "Admin",
-            LastName = "Admin"
-        };
-        
-        await userManager.CreateAsync(adminUser, password);
-        await userManager.AddToRoleAsync(adminUser, "Admin");
-    }
-
-    if (await userManager.FindByEmailAsync(contributorEmail) == null)
-    {
-        var contributorUser = new BlogUser
-        {
-            UserName = contributorEmail,
-            Email = contributorEmail,
-            FirstName = "Contributor",
-            LastName = "Contributor"
-        };
-        
-        await userManager.CreateAsync(contributorUser, password);
-        await userManager.AddToRoleAsync(contributorUser, "Contributor");
-    }
-    
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<ApplicationDbContext>();
-    context.Database.EnsureCreated();
-
-    if (!context.Articles.Any())
-    {
-        context.Articles.AddRange(
-            new Article
-            {
-                Title = "First Article",
-                Body = "This is the Body of the First Article. The Body will be larger than 100 characters to display the requirements.",
-                CreateDate = DateTime.Now,
-                StartDate = DateTime.Now,
-                ContributorEmail = "c@c.c"
-            },
-            new Article
-            {
-                Title = "Second Article",
-                Body = "This is the Body of the Second Article. The Body will be larger than 100 characters to display the requirements.",
-                CreateDate = DateTime.Now,
-                StartDate = DateTime.Now,
-                ContributorEmail = "c@c.c"
-            });
-        context.SaveChanges();
-    }
-    
-    
-}
     
 
 // Configure the HTTP request pipeline.
@@ -131,5 +54,19 @@ app.MapControllerRoute(
 
 app.MapRazorPages()
    .WithStaticAssets();
+
+using (var scope = app.Services.CreateScope()) {
+    var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<ApplicationDbContext>();    
+    context.Database.Migrate();
+
+    var userMgr = services.GetRequiredService<UserManager<BlogUser>>();  
+    var roleMgr = services.GetRequiredService<RoleManager<IdentityRole>>();  
+
+    IdentitySeedData.Initialize(context, userMgr, roleMgr).Wait();
+    ArticleSeedData.Initialize(context).Wait();
+}
+
 
 app.Run();

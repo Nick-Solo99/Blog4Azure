@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace BlogApp.Controllers;
 
-[Authorize]
 public class ArticleController : Controller
 {
     private readonly ApplicationDbContext _context;
